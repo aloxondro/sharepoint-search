@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Busca no SharePoint</title>
+</head>
+<body>
+    <div id="custom-search">
+        <input type="text" id="searchInput" placeholder="Pesquisar...">
+        <button onclick="executeSearch()">Buscar</button>
+    </div>
+    
+    <div id="searchResults"></div>
+
+    <script>
+        function executeSearch() {
+            const searchTerm = document.getElementById("searchInput").value;
+            if (searchTerm.trim() === "") {
+                alert("Por favor, insira um termo de pesquisa.");
+                return;
+            }
+            const directoryUrl = "/sites/seuSite/seuDiretorio"; // Ajuste para o diretório correto
+            const searchUrl = `${directoryUrl}/_api/search/query?querytext='${encodeURIComponent(searchTerm)}'`;
+            fetch(searchUrl, {
+                headers: { "Accept": "application/json;odata=verbose" }
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayResults(data.d.query.PrimaryQueryResult.RelevantResults.Table.Rows.results);
+            })
+            .catch(error => {
+                console.error("Erro ao realizar a busca:", error);
+            });
+        }
+
+        function displayResults(results) {
+            const resultsContainer = document.getElementById("searchResults");
+            resultsContainer.innerHTML = "";
+            if (results.length === 0) {
+                resultsContainer.innerHTML = "<p>Nenhum resultado encontrado.</p>";
+                return;
+            }
+            results.forEach(result => {
+                const itemTitle = result.Cells.results.find(cell => cell.Key === "Title").Value;
+                const itemPath = result.Cells.results.find(cell => cell.Key === "Path").Value;
+                const resultItem = document.createElement("div");
+                resultItem.innerHTML = `<a href="${itemPath}" target="_blank">${itemTitle}</a>`;
+                resultsContainer.appendChild(resultItem);
+            });
+        }
+    </script>
+</body>
+</html>
